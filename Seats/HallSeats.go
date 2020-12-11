@@ -1,7 +1,7 @@
 package Seats
 
 import (
-	"EndTermArchitecture/Halls"
+	"EndTermArchitecture/Hall"
 	"errors"
 )
 
@@ -17,10 +17,10 @@ type HallSeats interface {
 
 type HallSeatsClass struct {
 	seat SeatsCollection
-	hall Halls.HallsCollection
+	hall Hall.HallCollection
 }
 
-func NewHallSeats(hallscollection Halls.HallsCollection, seatscollection SeatsCollection )  HallSeats {
+func NewHallSeats(hallscollection Hall.HallCollection, seatscollection SeatsCollection )  HallSeats {
 	return &HallSeatsClass{seat:seatscollection, hall: hallscollection}
 }
 
@@ -35,7 +35,7 @@ func(obj *HallSeatsClass) CheckSeat (object *Seat)  (*Seat, error)  {
 	if object.SeatNumber == 0 {
 		return nil, errors.New("No Seat number ")
 	}
-	_, err:=obj.hall.GetHall(object.HallID)
+	_, err:=obj.hall.GetObject(object.HallID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (obj *HallSeatsClass) DeleteSeat(object *Seat)  error {
 
 }
 func (obj *HallSeatsClass) GetSeatsFromHall (id int64)  ([]*Seat, error) {
-	_, err := obj.hall.GetHall(id)
+	_, err := obj.hall.GetObject(id)
 	if err != nil {
 		return nil,err
 	}

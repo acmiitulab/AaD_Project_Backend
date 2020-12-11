@@ -1,4 +1,4 @@
-package Seats
+package Hall
 
 import (
 	"EndTermArchitecture/MongoConfig"
@@ -15,12 +15,12 @@ var (
 )
 
 
-type SeatsCollectionClass struct{
+type HallCollectionClass struct{
 	dbcon *mongo.Database
 }
 
 
-func NewSeatCollection(config MongoConfig.MongoConfig) (SeatsCollection, error){
+func NewHallCollection(config MongoConfig.MongoConfig) (HallCollection, error){
 
 	clientOptions:=options.Client().ApplyURI("mongodb://"+config.Host+":"+config.Port)
 	client,err := mongo.Connect(context.TODO(),clientOptions)
@@ -33,70 +33,70 @@ func NewSeatCollection(config MongoConfig.MongoConfig) (SeatsCollection, error){
 	}
 
 	db:=client.Database(config.Database)
-	collection=db.Collection("Seats")
-	return &SeatsCollectionClass{dbcon:db,},nil
+	collection=db.Collection("Halls")
+	return &HallCollectionClass{dbcon:db,},nil
 }
 
 
-func(scc *SeatsCollectionClass) GetSeats() ([]*Seat, error){
+func(scc *HallCollectionClass) GetObjects() ([]*Hall, error){
 
 	findOptions:=options.Find()
-	var seats []*Seat
+	var objects []*Hall
 	cur,err :=collection.Find(context.TODO(),bson.D{{}},findOptions)
 	if err!=nil{
 		return nil,err
 	}
 	for cur.Next(context.TODO()){
-		var seat Seat
-		err:=cur.Decode(&seat)
+		var object Hall
+		err:=cur.Decode(&object)
 		if err!=nil{
 			return nil,err
 		}
-		seats = append(seats, &seat)
+		objects = append(objects, &object)
 	}
 	if err:=cur.Err();err!=nil{
 		return nil,err
 	}
 	cur.Close(context.TODO())
-	return seats,nil
+	return objects,nil
 }
 
 
-func (scc *SeatsCollectionClass) AddSeat(seat *Seat) (*Seat,error){
+func (scc *HallCollectionClass) AddObject(object *Hall) (*Hall,error){
 
-	seats,err:=scc.GetSeats()
-	n:=len(seats)
+	objects,err:=scc.GetObjects()
+	n:=len(objects)
 	if n!=0{
-		lastSeat:=seats[n-1]
-		seat.SeatID = lastSeat.SeatID+1
+		lastSeat:=objects[n-1]
+		object.HallID = lastSeat.HallID+1
 	}else{
-		seat.SeatID = 1
+		object.HallID = 1
 	}
-	insertResult,err:=collection.InsertOne(context.TODO(), seat)
+	insertResult,err:=collection.InsertOne(context.TODO(), object)
 	if err!=nil{
 		return nil,err
 	}
 	fmt.Println("Inserted document", insertResult.InsertedID)
-	return seat,nil
+	return object,nil
 
 }
 
-func (scc *SeatsCollectionClass) GetSeat(id int64) (*Seat,error){
+func (scc *HallCollectionClass) GetObject(id int64) (*Hall,error){
 
-	filter:=bson.D{{"seatid",id}}
-	seat:=&Seat{}
-	err:=collection.FindOne(context.TODO(),filter).Decode(&seat)
+	filter:=bson.D{{"hallid",id}}
+	object:=&Hall{}
+	err:=collection.FindOne(context.TODO(),filter).Decode(&object)
 	if err!=nil{
 		return nil,err
 	}
-	return seat,nil
+	return object,nil
 
 }
 
 
-func (scc *SeatsCollectionClass) DeleteSeat(seat *Seat) error{
+func (scc *HallCollectionClass) DeleteObject(object *Hall) error{
 
-	filter:=bson.D{{"seatid",seat.SeatID}}
+	filter:=bson.D{{"hallid",object.HallID}}
 	_,err:=collection.DeleteOne(context.TODO(),filter)
 	if err!=nil{
 		return err
@@ -104,41 +104,40 @@ func (scc *SeatsCollectionClass) DeleteSeat(seat *Seat) error{
 	return nil
 }
 
-func (scc *SeatsCollectionClass) UpdateSeat (seat *Seat)  (*Seat, error){
+func (scc *HallCollectionClass) UpdateObject (object *Hall)  (*Hall, error){
 
-	filter:=bson.D{{"seatid",seat.SeatID}}
+	filter:=bson.D{{"hallid",object.HallID}}
 	update:=bson.D{{"$set",bson.D{
-		{"seatnumber",seat.SeatNumber},
-		{"hallid",seat.HallID},
-		{"isFree",seat.IsFree},
+		{"hallname",object.HallName},
+		{"cinemaid",object.CinemaID},
 	}}}
 	_,err:=collection.UpdateOne(context.TODO(),filter,update)
 	if err!=nil{
 		return nil,err
 	}
-	return seat,nil
+	return object,nil
 }
-func (scc *SeatsCollectionClass) GetSeatFromHall (id int64)  ([]*Seat, error)  {
-	filter:=bson.D{{"hallid",id}}
+func (scc *HallCollectionClass) GetObjectsFromParent (id int64)  ([]*Hall, error)  {
+	filter:=bson.D{{"cinemaid",id}}
 	options:=options.Find()
-	var seats []*Seat
+	var objects []*Hall
 	cur, err := collection.Find(context.TODO(), filter, options)
 	if err != nil {
 		log.Fatal(err)
 	}
 	for cur.Next(context.TODO()){
-		var seat Seat
-		err:=cur.Decode(&seat)
+		var object Hall
+		err:=cur.Decode(&object)
 		if err!=nil{
 			return nil,err
 		}
-		seats = append(seats,&seat)
+		objects = append(objects,&object)
 	}
 	if err:=cur.Err();err!=nil{
 		return nil,err
 	}
 	cur.Close(context.TODO())
-	return seats,nil
+	return objects,nil
 }
 
 
